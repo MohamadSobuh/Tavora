@@ -1,0 +1,36 @@
+@import "tailwindcss";
+
+@theme {
+  /* ========================= Gold ========================= */
+  --color-gold-300: #e6c45c;
+  --color-gold-400: #d4a017;
+  --color-gold-500: #b8860b;
+  --color-gold-600: #9a7209;
+  --color-gold-700: #795a07;
+  /* ========================= Background ========================= */
+  --color-background: #0f172a;
+  --color-background-secondary: #111c30;
+  /* ========================= Cards ========================= */
+  --color-card: #1e293b;
+  --color-card-hover: #263449;
+  /* ========================= Borders ========================= */
+  --color-border: #334155;
+  --color-border-hover: #475569;
+  /* ========================= Text ========================= */
+  --color-text: #f8fafc;
+  --color-text-secondary: #cbd5e1;
+  --color-muted: #94a3b8;
+  /* ========================= Status Colors ========================= */
+  /* Success */
+  --color-success: #22c55e;
+  --color-success-bg: #14532d;
+  /* Warning */
+  --color-warning: #f59e0b;
+  --color-warning-bg: #78350f;
+  /* Danger */
+  --color-danger: #ef4444;
+  --color-danger-bg: #7f1d1d;
+  /* Info */
+  --color-info: #3b82f6;
+  --color-info-bg: #1e3a8a;
+}
