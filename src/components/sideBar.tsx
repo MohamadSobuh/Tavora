@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { logoutAction } from "@/app/actions/auth";
 import {
   CalendarDays,
   LayoutDashboard,
@@ -92,13 +93,15 @@ export default function SideBar() {
         </p>
       </div>
 
-      <button
-        type="button"
-        className="mt-4 hidden items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-muted transition hover:bg-danger-bg/40 hover:text-danger lg:flex"
-      >
-        <LogOut className="h-5 w-5" />
-        <span>Logout</span>
-      </button>
+      <form action={logoutAction} className="mt-4 hidden lg:block">
+        <button
+          type="submit"
+          className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-muted transition hover:bg-danger-bg/40 hover:text-danger"
+        >
+          <LogOut className="h-5 w-5" />
+          <span>Logout</span>
+        </button>
+      </form>
     </aside>
   );
 }

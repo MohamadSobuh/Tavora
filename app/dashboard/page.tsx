@@ -1,5 +1,5 @@
 import Link from "next/link";
-import StatusCards from "../_components/statusCards";
+import StatusCards from "@/src/components/statusCards";
 import {
   CalendarClock,
   Check,
@@ -24,7 +24,12 @@ const upcoming = [
     status: "Medium",
     tone: "warning",
   },
-  { task: "Prepare weekly plan", due: "Friday", status: "Normal", tone: "info" },
+  {
+    task: "Prepare weekly plan",
+    due: "Friday",
+    status: "Normal",
+    tone: "info",
+  },
 ];
 
 export default function Page() {
@@ -124,9 +129,7 @@ export default function Page() {
         <div className="rounded-lg border border-border bg-background-secondary p-6">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-semibold text-text">
-                Upcoming work
-              </h2>
+              <h2 className="text-xl font-semibold text-text">Upcoming work</h2>
               <p className="mt-1 text-sm text-muted">Deadlines and priority</p>
             </div>
             <CalendarClock className="h-5 w-5 text-gold-400" />
