@@ -119,7 +119,7 @@ export default async function TasksPage({ searchParams }: TasksPageProps) {
                   : `/tasks?filter=${encodeURIComponent(filter)}`
               }
               key={filter}
-              className={`h-11 min-w-max rounded-lg px-4 text-sm font-semibold transition ${
+              className={`h-11 min-w-max rounded-lg px-4 text-sm font-semibold transition align-center justify-center flex ${
                 activeFilter === filter
                   ? "bg-gold-500 text-background"
                   : "border border-border bg-background-secondary text-muted hover:text-text"
@@ -130,7 +130,7 @@ export default async function TasksPage({ searchParams }: TasksPageProps) {
           ))}
           <button
             type="button"
-            className="inline-flex h-11 items-center gap-2 rounded-lg border border-border bg-background-secondary px-4 text-sm font-semibold text-muted transition hover:text-text"
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-border bg-background-secondary px-4 text-sm font-semibold text-muted transition hover:text-text"
             title="Filter"
           >
             <Filter className="h-4 w-4" />

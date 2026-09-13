@@ -36,7 +36,6 @@ export default async function TaskDetailPage({ params }: TaskDetailPageProps) {
       year: "numeric",
     }).format(new Date(`${value}T00:00:00`));
   }
-
   return (
     <section className="mx-auto grid w-full max-w-7xl gap-6 xl:grid-cols-[1fr_360px]">
       <div className="rounded-lg border border-border bg-card p-6 sm:p-8">
@@ -96,7 +95,7 @@ export default async function TaskDetailPage({ params }: TaskDetailPageProps) {
             <Clock3 className="h-5 w-5 text-warning" />
             <p className="mt-3 text-sm text-muted">Estimate</p>
             <p className="mt-1 font-semibold text-text">
-              {task.estimate || "Not set"}
+              {task.estimate || "Not set"} m
             </p>
           </div>
           <div className="rounded-lg border border-border bg-background-secondary p-4">

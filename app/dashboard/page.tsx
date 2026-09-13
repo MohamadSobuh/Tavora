@@ -182,9 +182,9 @@ export default async function Page() {
                 </div>
                 <span
                   className={`rounded px-2.5 py-1 text-xs font-semibold ${
-                    item.priority === "High"
+                    item.priority === "high"
                       ? "bg-danger-bg text-danger"
-                      : item.priority === "Medium"
+                      : item.priority === "medium"
                         ? "bg-warning-bg text-warning"
                         : "bg-info-bg text-info"
                   }`}

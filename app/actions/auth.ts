@@ -28,7 +28,7 @@ export async function logoutAction() {
   const { error } = await supabase.auth.signOut();
 
   if (error) {
-    return { success: false, error: "Error occurred while logging out" };
+    redirect("/dashboard?error=Error%20occurred%20while%20logging%20out");
   }
 
   redirect("/login");

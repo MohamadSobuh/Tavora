@@ -6,6 +6,22 @@ import { createClient } from "./supabase/server";
 
 export type TaskStatus = "Todo" | "In progress" | "Waiting" | "Done";
 
+type DatabaseTaskStatus = "todo" | "in_progress" | "waiting" | "done";
+
+const statusByDatabaseValue: Record<DatabaseTaskStatus, TaskStatus> = {
+  todo: "Todo",
+  in_progress: "In progress",
+  waiting: "Waiting",
+  done: "Done",
+};
+
+const databaseStatusByAppValue: Record<TaskStatus, DatabaseTaskStatus> = {
+  Todo: "todo",
+  "In progress": "in_progress",
+  Waiting: "waiting",
+  Done: "done",
+};
+
 export type Task = {
   id: string | number;
   title: string;
@@ -29,13 +45,16 @@ type SingleTaskResult =
   | { success: false; error: string };
 
 function normalizeTask(row: Record<string, unknown>): Task {
-  const rawStatus = row.status;
+  const rawStatus = String(row.status ?? "");
   const status: TaskStatus =
-    rawStatus === "Done" ||
-    rawStatus === "In progress" ||
-    rawStatus === "Waiting"
-      ? rawStatus
-      : "Todo";
+    rawStatus in statusByDatabaseValue
+      ? statusByDatabaseValue[rawStatus as DatabaseTaskStatus]
+      : rawStatus === "Done" ||
+          rawStatus === "In progress" ||
+          rawStatus === "Waiting" ||
+          rawStatus === "Todo"
+        ? rawStatus
+        : "Todo";
 
   return {
     id: row.id as string | number,
@@ -48,7 +67,7 @@ function normalizeTask(row: Record<string, unknown>): Task {
     status,
     tags: [],
     description: String(row.description ?? ""),
-    estimate: "",
+    estimate: String(row.estimate_minutes ?? ""),
   };
 }
 
@@ -58,6 +77,10 @@ export async function createTask(formData: FormData) {
   const ownerId = formData.get("owner_id");
   const dueDate = formData.get("dueDate");
   const priority = formData.get("priority");
+  const description = formData.get("description");
+  const estimate = formData.get("estimate");
+  const formattedEstimate =
+    typeof estimate === "string" ? parseInt(estimate, 10) * 60 : null;
 
   if (!title || !projectId || !ownerId || !dueDate || !priority) {
     return { success: false, error: "All required fields must be filled out" };
@@ -68,6 +91,8 @@ export async function createTask(formData: FormData) {
     project_id: projectId,
     owner_id: ownerId,
     due_date: dueDate,
+    description: description,
+    estimate_minutes: formattedEstimate,
     priority,
   });
   if (error) {
@@ -98,18 +123,12 @@ export async function getTask(id: string): Promise<SingleTaskResult> {
   const { data, error } = await supabase
     .from("tasks")
     .select(
-      "id, title, project_id, owner_id, due_date, priority, status, description",
+      "id, title, project_id, owner_id, due_date, priority, status, description,estimate_minutes",
     )
     .eq("id", id)
     .maybeSingle();
 
   if (error) {
-    console.error("Error fetching task:", {
-      code: error.code,
-      message: error.message,
-      details: error.details,
-      hint: error.hint,
-    });
     return { success: false, error: error.message };
   }
   if (!data) {
@@ -121,21 +140,25 @@ export async function getTask(id: string): Promise<SingleTaskResult> {
 export async function updateTaskStatus(formData: FormData) {
   const id = formData.get("id");
   const status = formData.get("status");
-  if (typeof id !== "string" || typeof status !== "string") {
+  if (
+    typeof id !== "string" ||
+    typeof status !== "string" ||
+    !(status in databaseStatusByAppValue)
+  ) {
     redirect("/tasks");
   }
 
   const supabase = await createClient();
   const { error } = await supabase
     .from("tasks")
-    .update({ status })
+    .update({ status: databaseStatusByAppValue[status as TaskStatus] })
     .eq("id", id);
   if (error) {
     redirect(`/tasks/${id}?error=${encodeURIComponent(error.message)}`);
   }
   revalidatePath("/tasks");
   revalidatePath(`/tasks/${id}`);
-  redirect(`/tasks/${id}`);
+  redirect(`/tasks/${id}?updated=${Date.now()}`);
 }
 
 export async function deleteTask(formData: FormData) {
@@ -150,5 +173,5 @@ export async function deleteTask(formData: FormData) {
     redirect(`/tasks/${id}?error=${encodeURIComponent(error.message)}`);
   }
   revalidatePath("/tasks");
-  redirect("/tasks");
+  redirect("/tasks?deleted=1");
 }

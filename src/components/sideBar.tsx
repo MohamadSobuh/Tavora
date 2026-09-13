@@ -13,6 +13,7 @@ import {
   Search,
   Settings,
 } from "lucide-react";
+import { useTasks } from "@/src/components/TasksProvider";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -23,6 +24,12 @@ const navItems = [
 
 export default function SideBar() {
   const pathname = usePathname();
+  const { tasks } = useTasks();
+  const completedTasks = tasks.filter((task) => task.status === "Done").length;
+  const taskPercentage = tasks.length
+    ? Math.round((completedTasks / tasks.length) * 100)
+    : 0;
+  const taskPer = `${taskPercentage}%`;
 
   return (
     <aside className="fixed inset-x-0 top-0 z-30 border-b border-border bg-background-secondary/95 px-4 py-3 backdrop-blur lg:inset-y-0 lg:right-auto lg:flex lg:h-screen lg:w-64 lg:flex-col lg:border-b-0 lg:border-r lg:px-4 lg:py-6">
@@ -82,14 +89,17 @@ export default function SideBar() {
         <div className="flex items-center justify-between">
           <p className="text-sm font-semibold text-text">Weekly focus</p>
           <span className="rounded bg-success-bg px-2 py-1 text-xs font-medium text-success">
-            72%
+            {taskPer}
           </span>
         </div>
         <div className="mt-4 h-2 rounded bg-background">
-          <div className="h-2 w-[72%] rounded bg-gold-500" />
+          <div
+            className="h-2 rounded bg-gold-500 transition-[width]"
+            style={{ width: taskPer }}
+          />
         </div>
         <p className="mt-3 text-xs leading-5 text-muted">
-          18 of 25 planned tasks are already on track.
+          {completedTasks} of {tasks.length} planned tasks are already on track.
         </p>
       </div>
 
