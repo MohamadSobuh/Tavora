@@ -9,30 +9,62 @@ import {
   MoveUpRight,
   Plus,
 } from "lucide-react";
+import { getTasks } from "@/src/lib/tasks";
+import { getProjectByTaskId } from "@/src/lib/projects";
 
-const projects = [
-  { name: "Product launch", done: 18, total: 24, color: "bg-success" },
-  { name: "Design system", done: 9, total: 14, color: "bg-gold-500" },
-  { name: "Client portal", done: 6, total: 12, color: "bg-info" },
-];
+const projectColors = ["bg-success", "bg-gold-500", "bg-info", "bg-warning"];
 
-const upcoming = [
-  { task: "Finalize task cards", due: "Today", status: "High", tone: "danger" },
-  {
-    task: "Review dashboard states",
-    due: "Tomorrow",
-    status: "Medium",
-    tone: "warning",
-  },
-  {
-    task: "Prepare weekly plan",
-    due: "Friday",
-    status: "Normal",
-    tone: "info",
-  },
-];
+function formatDueDate(value: string | null) {
+  if (!value) return "No date";
+  return new Intl.DateTimeFormat("en", {
+    month: "short",
+    day: "numeric",
+  }).format(new Date(`${value}T00:00:00`));
+}
 
-export default function Page() {
+export default async function Page() {
+  const result = await getTasks();
+  const tasks = result.success ? (result.data ?? []) : [];
+  const completed = tasks.filter((task) => task.status === "Done").length;
+  const pending = tasks.length - completed;
+  const overdue = tasks.filter(
+    (task) =>
+      task.dueDate &&
+      task.status !== "Done" &&
+      new Date(`${task.dueDate}T23:59:59`) < new Date(),
+  ).length;
+  const tasksWithProjects = await Promise.all(
+    tasks.map(async (task) => {
+      const projectResult = await getProjectByTaskId(task.id);
+      return {
+        task,
+        projectName: projectResult.success
+          ? projectResult.data.name
+          : task.project,
+      };
+    }),
+  );
+  const projectMap = new Map<string, { done: number; total: number }>();
+  tasksWithProjects.forEach(({ task, projectName }) => {
+    const project = projectMap.get(projectName) ?? { done: 0, total: 0 };
+    project.total += 1;
+    if (task.status === "Done") project.done += 1;
+    projectMap.set(projectName, project);
+  });
+  const projects = Array.from(projectMap, ([name, values], index) => ({
+    name,
+    ...values,
+    color: projectColors[index % projectColors.length],
+  }));
+  const upcoming = tasks
+    .filter((task) => task.status !== "Done" && task.dueDate)
+    .sort((first, second) =>
+      (first.dueDate ?? "9999-12-31").localeCompare(
+        second.dueDate ?? "9999-12-31",
+      ),
+    )
+    .slice(0, 3);
+
   return (
     <section className="mx-auto flex w-full max-w-7xl flex-col gap-8">
       <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
@@ -61,29 +93,29 @@ export default function Page() {
         <StatusCards
           name="Total tasks"
           icon={ListTodo}
-          numTasks={24}
-          note="Across all active boards"
+          numTasks={tasks.length}
+          note="Across this workspace"
           st="gold"
         />
         <StatusCards
           name="Completed"
           icon={Check}
-          numTasks={14}
-          note="Eight finished this week"
+          numTasks={completed}
+          note="Completed tasks"
           st="green"
         />
         <StatusCards
           name="Pending"
           icon={Clock}
-          numTasks={7}
-          note="Three need attention today"
+          numTasks={pending}
+          note="Tasks still in motion"
           st="yellow"
         />
         <StatusCards
           name="Overdue"
           icon={CircleAlert}
-          numTasks={3}
-          note="Oldest is two days late"
+          numTasks={overdue}
+          note="Need attention"
           st="red"
         />
       </div>
@@ -137,26 +169,29 @@ export default function Page() {
 
           <div className="mt-6 divide-y divide-border">
             {upcoming.map((item) => (
-              <div
-                key={item.task}
+              <Link
+                href={`/tasks/${item.id}`}
+                key={item.id}
                 className="flex items-center justify-between gap-4 py-4 first:pt-0 last:pb-0"
               >
                 <div>
-                  <p className="font-medium text-text">{item.task}</p>
-                  <p className="mt-1 text-sm text-muted">Due {item.due}</p>
+                  <p className="font-medium text-text">{item.title}</p>
+                  <p className="mt-1 text-sm text-muted">
+                    Due {formatDueDate(item.dueDate)}
+                  </p>
                 </div>
                 <span
                   className={`rounded px-2.5 py-1 text-xs font-semibold ${
-                    item.tone === "danger"
+                    item.priority === "High"
                       ? "bg-danger-bg text-danger"
-                      : item.tone === "warning"
+                      : item.priority === "Medium"
                         ? "bg-warning-bg text-warning"
                         : "bg-info-bg text-info"
                   }`}
                 >
-                  {item.status}
+                  {item.priority}
                 </span>
-              </div>
+              </Link>
             ))}
           </div>
         </div>

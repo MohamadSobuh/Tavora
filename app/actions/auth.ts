@@ -10,7 +10,7 @@ export async function loginAction(formData: FormData) {
     typeof email !== "string" ||
     typeof password !== "string"
   ) {
-    throw new Error("Invalid form data");
+    return { success: false, error: "Invalid email or password" };
   }
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({
@@ -18,7 +18,7 @@ export async function loginAction(formData: FormData) {
     password,
   });
   if (error) {
-    throw new Error(error.message);
+    return { success: false, error: "Invalid email or password" };
   }
   redirect("/dashboard");
 }
@@ -28,7 +28,7 @@ export async function logoutAction() {
   const { error } = await supabase.auth.signOut();
 
   if (error) {
-    throw new Error(error.message);
+    return { success: false, error: "Error occurred while logging out" };
   }
 
   redirect("/login");

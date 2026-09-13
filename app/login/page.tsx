@@ -1,17 +1,20 @@
-import React from "react";
+import Image from "next/image";
 import tavoraLogo from "../public/images/tavora_logo1.png";
 import LoginForm from "@/src/components/loginForm";
+import { ToastContainer } from "react-toastify";
 
 export default function Page() {
   return (
-    <div className="flex min-h-screen w-full items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 px-4 py-0">
+    <div className="relative flex min-h-screen w-full items-center justify-center bg-linear-to-br from-slate-950 via-slate-900 to-slate-800 px-4 py-0">
+      <ToastContainer position="top-center" />
       <div className="w-full max-w-md rounded-2xl border border-white/10 bg-slate-900/80 p-8 shadow-2xl shadow-slate-950/40 backdrop-blur-sm">
         <div className="mb-8 text-center">
           <div className="mx-auto mb-4 flex h-12 w-auto items-center justify-center ">
             <span className="sr-only">Tavora</span>
-            <img
-              src={tavoraLogo.src}
+            <Image
+              src={tavoraLogo}
               alt="Tavora Logo"
+              priority
               className="h-auto w-auto"
             />
           </div>

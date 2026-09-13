@@ -9,14 +9,70 @@ import {
   Plus,
   Search,
 } from "lucide-react";
-import { getTasks } from "@/src/lib/tasks";
+import { getTasks, type Task } from "@/src/lib/tasks";
+import { getProjectByTaskId } from "@/src/lib/projects";
 
 const filters = ["All", "Active", "Done", "Overdue"];
 
-export default async function TasksPage() {
+type TasksPageProps = {
+  searchParams: Promise<{ q?: string; filter?: string }>;
+};
+
+function formatDueDate(value: string | null) {
+  if (!value) return "No date";
+  return new Intl.DateTimeFormat("en", {
+    month: "short",
+    day: "numeric",
+  }).format(new Date(`${value}T00:00:00`));
+}
+
+function isOverdue(task: Task) {
+  return Boolean(
+    task.dueDate &&
+    task.status !== "Done" &&
+    new Date(`${task.dueDate}T23:59:59`) < new Date(),
+  );
+}
+
+export default async function TasksPage({ searchParams }: TasksPageProps) {
+  const params = await searchParams;
   const result = await getTasks();
-  const tasks = result.success ? (result.data ?? []) : [];
-  console.log("Fetched tasks:", tasks);
+  const query = params.q?.trim().toLowerCase() ?? "";
+  const activeFilter = params.filter ?? "All";
+  const tasks = result.success
+    ? (result.data ?? [])
+        .filter((task) => {
+          const matchesQuery = query
+            ? [task.title, task.project, task.owner].some((value) =>
+                value.toLowerCase().includes(query),
+              )
+            : true;
+          const matchesFilter =
+            activeFilter === "Active"
+              ? task.status !== "Done"
+              : activeFilter === "Done"
+                ? task.status === "Done"
+                : activeFilter === "Overdue"
+                  ? isOverdue(task)
+                  : true;
+          return matchesQuery && matchesFilter;
+        })
+        .sort((first, second) =>
+          (first.dueDate ?? "9999-12-31").localeCompare(
+            second.dueDate ?? "9999-12-31",
+          ),
+        )
+    : [];
+  const projectNames = new Map<string | number, string>();
+  await Promise.all(
+    tasks.map(async (task) => {
+      const projectResult = await getProjectByTaskId(task.id);
+      projectNames.set(
+        task.id,
+        projectResult.success ? projectResult.data.name : "Unknown project",
+      );
+    }),
+  );
 
   return (
     <section className="mx-auto flex w-full max-w-7xl flex-col gap-6">
@@ -44,25 +100,33 @@ export default async function TasksPage() {
       <div className="grid gap-4 lg:grid-cols-[1fr_auto]">
         <div className="flex min-h-11 items-center rounded-lg border border-border bg-card px-4 text-muted">
           <Search className="mr-3 h-4 w-4 text-gold-400" />
-          <input
-            type="text"
-            placeholder="Search by task, project, or owner"
-            className="bg-transparent text-sm placeholder:text-muted focus:outline-none w-full"
-          />
+          <form action="/tasks" className="flex w-full">
+            <input
+              type="search"
+              name="q"
+              defaultValue={params.q}
+              placeholder="Search by task, project, or owner"
+              className="w-full bg-transparent text-sm placeholder:text-muted focus:outline-none"
+            />
+          </form>
         </div>
         <div className="flex gap-2 overflow-x-auto">
-          {filters.map((filter, index) => (
-            <button
-              type="button"
+          {filters.map((filter) => (
+            <Link
+              href={
+                filter === "All"
+                  ? "/tasks"
+                  : `/tasks?filter=${encodeURIComponent(filter)}`
+              }
               key={filter}
               className={`h-11 min-w-max rounded-lg px-4 text-sm font-semibold transition ${
-                index === 0
+                activeFilter === filter
                   ? "bg-gold-500 text-background"
                   : "border border-border bg-background-secondary text-muted hover:text-text"
               }`}
             >
               {filter}
-            </button>
+            </Link>
           ))}
           <button
             type="button"
@@ -90,7 +154,12 @@ export default async function TasksPage() {
           {!result.success ? (
             <p className="px-5 py-8 text-sm text-danger">{result.error}</p>
           ) : tasks.length === 0 ? (
-            <p className="px-5 py-8 text-sm text-muted">No tasks found.</p>
+            <div className="px-5 py-10">
+              <p className="font-medium text-text">No tasks found.</p>
+              <p className="mt-1 text-sm text-muted">
+                Try another filter or create a task for this workspace.
+              </p>
+            </div>
           ) : (
             tasks.map((task) => (
               <Link
@@ -108,16 +177,16 @@ export default async function TasksPage() {
                     <p className="font-medium text-text">{task.title}</p>
                     <p className="mt-1 text-sm text-muted lg:hidden">
                       {task.project} <span aria-hidden="true">&middot;</span>{" "}
-                      Due {task.due}
+                      Due {formatDueDate(task.dueDate)}
                     </p>
                   </div>
                 </div>
                 <span className="hidden text-sm text-text-secondary lg:block">
-                  {task.project}
+                  {projectNames.get(task.id) ?? "Unknown project"}
                 </span>
                 <span className="hidden text-sm text-muted lg:block">
                   <CalendarDays className="mr-2 inline h-4 w-4 text-gold-400" />
-                  {task.due}
+                  {formatDueDate(task.dueDate)}
                 </span>
                 <span
                   className={`w-max rounded px-2.5 py-1 text-xs font-semibold ${

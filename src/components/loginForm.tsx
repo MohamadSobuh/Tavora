@@ -1,9 +1,25 @@
-import React from "react";
-import { loginAction } from "@/app/actions/auth";
+"use client";
 
-export default function loginForm() {
+import { loginAction } from "@/app/actions/auth";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
+export default function LoginForm() {
+  async function handleSubmit(formData: FormData) {
+    try {
+      const result = await loginAction(formData);
+      if (!result.success) {
+        toast.error(result.error);
+        return;
+      }
+      toast.success("Logged in successfully");
+    } catch (error) {
+      console.error(error);
+      toast.error("Unexpected error logging in");
+    }
+  }
   return (
-    <form className="space-y-5" action={loginAction}>
+    <form className="space-y-5" action={handleSubmit}>
       <div className="space-y-2">
         <label
           htmlFor="email"
