@@ -14,7 +14,6 @@ import {
   Settings,
 } from "lucide-react";
 import { useTasks } from "@/src/components/TasksProvider";
-import { TaskSearchPreview } from "@/src/components/TaskSearchPreview";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
