@@ -14,6 +14,7 @@ import {
   Settings,
 } from "lucide-react";
 import { useTasks } from "@/src/components/TasksProvider";
+import { TaskSearchPreview } from "@/src/components/TaskSearchPreview";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -57,10 +58,20 @@ export default function SideBar() {
         </Link>
       </div>
 
-      <div className="mt-3 hidden rounded-lg border border-border bg-background px-3 py-2 text-muted lg:flex">
+      <form
+        action="/tasks"
+        method="get"
+        className="mt-3 hidden items-center rounded-lg border border-border bg-background px-3 py-2 text-muted lg:flex"
+      >
         <Search className="mr-2 h-4 w-4 text-gold-400" />
-        <span className="text-sm">Search tasks</span>
-      </div>
+        <input
+          type="search"
+          name="q"
+          placeholder="Search tasks"
+          aria-label="Search tasks"
+          className="w-full bg-transparent text-sm text-text placeholder:text-muted focus:outline-none"
+        />
+      </form>
 
       <nav className="mt-3 flex gap-2 overflow-x-auto lg:mt-8 lg:flex-1 lg:flex-col lg:overflow-visible">
         {navItems.map(({ href, label, icon: Icon }) => {

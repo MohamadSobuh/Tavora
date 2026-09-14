@@ -2,7 +2,7 @@
 
 import { usePathname, useSearchParams } from "next/navigation";
 import SideBar from "@/src/components/sideBar";
-import TaskNotifications from "@/src/components/TaskNotifications";
+import TaskNotifications from "./TaskNotifications";
 import { TasksProvider } from "@/src/components/TasksProvider";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {

@@ -7,10 +7,10 @@ import {
   Filter,
   MoreHorizontal,
   Plus,
-  Search,
 } from "lucide-react";
 import { getTasks, type Task } from "@/src/lib/tasks";
 import { getProjectByTaskId } from "@/src/lib/projects";
+import TaskSearchPreview from "@/src/components/TaskSearchPreview";
 
 const filters = ["All", "Active", "Done", "Overdue"];
 
@@ -37,10 +37,11 @@ function isOverdue(task: Task) {
 export default async function TasksPage({ searchParams }: TasksPageProps) {
   const params = await searchParams;
   const result = await getTasks();
+  const allTasks = result.success ? (result.data ?? []) : [];
   const query = params.q?.trim().toLowerCase() ?? "";
   const activeFilter = params.filter ?? "All";
   const tasks = result.success
-    ? (result.data ?? [])
+    ? allTasks
         .filter((task) => {
           const matchesQuery = query
             ? [task.title, task.project, task.owner].some((value) =>
@@ -98,18 +99,7 @@ export default async function TasksPage({ searchParams }: TasksPageProps) {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[1fr_auto]">
-        <div className="flex min-h-11 items-center rounded-lg border border-border bg-card px-4 text-muted">
-          <Search className="mr-3 h-4 w-4 text-gold-400" />
-          <form action="/tasks" className="flex w-full">
-            <input
-              type="search"
-              name="q"
-              defaultValue={params.q}
-              placeholder="Search by task, project, or owner"
-              className="w-full bg-transparent text-sm placeholder:text-muted focus:outline-none"
-            />
-          </form>
-        </div>
+        <TaskSearchPreview tasks={allTasks} initialQuery={params.q ?? ""} />
         <div className="flex gap-2 overflow-x-auto">
           {filters.map((filter) => (
             <Link

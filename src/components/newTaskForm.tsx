@@ -15,7 +15,19 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { createTask } from "@/src/lib/tasks";
 
-export default function NewTaskForm() {
+export type NewTaskPreview = {
+  title: string;
+  project: string;
+  priority: string;
+  dueDate: string;
+  description: string;
+};
+
+type NewTaskFormProps = {
+  onPreviewChange: (preview: NewTaskPreview) => void;
+};
+
+export default function NewTaskForm({ onPreviewChange }: NewTaskFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -35,7 +47,7 @@ export default function NewTaskForm() {
       setTimeout(() => {
         router.push("/tasks");
         router.refresh();
-      }, 800); // إعطاء مهلة قصيرة لرؤية رسالة النجاح
+      }, 300); // إعطاء مهلة قصيرة لرؤية رسالة النجاح
     } catch (err) {
       console.error(err);
       toast.error("Unexpected error creating task");
@@ -44,7 +56,28 @@ export default function NewTaskForm() {
   }
 
   return (
-    <form className="mt-8 grid gap-5" action={handleSubmit}>
+    <form
+      className="mt-8 grid gap-5"
+      action={handleSubmit}
+      onChange={(event) => {
+        const form = event.currentTarget;
+        const project = form.elements.namedItem(
+          "project_id",
+        ) as HTMLSelectElement;
+        const priority = form.elements.namedItem(
+          "priority",
+        ) as HTMLSelectElement;
+        const data = new FormData(form);
+        onPreviewChange({
+          title: String(data.get("title") ?? ""),
+          project:
+            project.options[project.selectedIndex]?.text ?? "Design system",
+          priority: priority.options[priority.selectedIndex]?.text ?? "High",
+          dueDate: String(data.get("dueDate") ?? ""),
+          description: String(data.get("description") ?? ""),
+        });
+      }}
+    >
       <label className="grid gap-2">
         <span className="text-sm font-semibold text-text">Task title</span>
         <input

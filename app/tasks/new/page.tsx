@@ -1,8 +1,19 @@
+"use client";
+
 import Link from "next/link";
 import { ArrowLeft, CalendarDays, Tag } from "lucide-react";
-import NewTaskForm from "@/src/components/newTaskForm";
+import NewTaskForm, { type NewTaskPreview } from "@/src/components/newTaskForm";
+import { useState } from "react";
 
 export default function NewTaskPage() {
+  const [preview, setPreview] = useState<NewTaskPreview>({
+    title: "",
+    project: "Design system",
+    priority: "High",
+    dueDate: "",
+    description: "",
+  });
+
   return (
     <section className="mx-auto grid w-full max-w-7xl gap-6 xl:grid-cols-[1fr_360px]">
       <div className="rounded-lg border border-border bg-card p-6 sm:p-8">
@@ -25,7 +36,7 @@ export default function NewTaskPage() {
             Capture the title, priority, date, and details in one focused view.
           </p>
         </div>
-        <NewTaskForm />
+        <NewTaskForm onPreviewChange={setPreview} />
       </div>
 
       <aside className="rounded-lg border border-border bg-background-secondary p-6">
@@ -33,13 +44,20 @@ export default function NewTaskPage() {
         <div className="mt-5 rounded-lg border border-border bg-card p-5">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="font-semibold text-text">Untitled task</p>
-              <p className="mt-1 text-sm text-muted">Design system</p>
+              <p className="font-semibold text-text">
+                {preview.title.trim() || "Untitled task"}
+              </p>
+              <p className="mt-1 text-sm text-muted">{preview.project}</p>
             </div>
             <span className="rounded bg-danger-bg px-2.5 py-1 text-xs font-semibold text-danger">
-              High
+              {preview.priority}
             </span>
           </div>
+          {preview.description.trim() ? (
+            <p className="mt-4 line-clamp-3 text-sm leading-6 text-text-secondary">
+              {preview.description}
+            </p>
+          ) : null}
           <div className="mt-5 flex flex-wrap gap-2">
             <span className="inline-flex items-center gap-2 rounded bg-gold-500/10 px-3 py-1.5 text-sm text-gold-300">
               <Tag className="h-3.5 w-3.5" />
@@ -47,7 +65,7 @@ export default function NewTaskPage() {
             </span>
             <span className="inline-flex items-center gap-2 rounded bg-info-bg px-3 py-1.5 text-sm text-info">
               <CalendarDays className="h-3.5 w-3.5" />
-              No date
+              {preview.dueDate || "No date"}
             </span>
           </div>
         </div>

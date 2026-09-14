@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag, unstable_cache } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "./supabase/server";
 
@@ -44,6 +44,9 @@ type SingleTaskResult =
   | { success: true; data: Task }
   | { success: false; error: string };
 
+const taskSelect =
+  "id, title, project_id, owner_id, due_date, priority, status, description, estimate_minutes";
+
 function normalizeTask(row: Record<string, unknown>): Task {
   const rawStatus = String(row.status ?? "");
   const status: TaskStatus =
@@ -86,6 +89,9 @@ export async function createTask(formData: FormData) {
     return { success: false, error: "All required fields must be filled out" };
   }
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   const { error } = await supabase.from("tasks").insert({
     title,
     project_id: projectId,
@@ -99,42 +105,41 @@ export async function createTask(formData: FormData) {
     console.log("Error creating task:", error);
     return { success: false, error: error.message };
   }
+  if (user) revalidateTag(`tasks:${user.id}`, { expire: 0 });
   return { success: true };
 }
 
-export async function getTasks() {
+export async function getTasks(): Promise<TaskResult> {
   const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("tasks")
-    .select(
-      "id, title, project_id, owner_id, due_date, priority, status, description",
-    );
-  if (error) {
-    return { success: false, error: error.message };
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+  if (userError || !user) {
+    return { success: false, error: userError?.message ?? "Not authenticated" };
   }
-  return {
-    success: true,
-    data: (data ?? []).map(normalizeTask),
-  } satisfies TaskResult;
+
+  const getCachedTasks = unstable_cache(
+    async () => {
+      const { data, error } = await supabase.from("tasks").select(taskSelect);
+      if (error) return { success: false, error: error.message } as const;
+      return { success: true, data: (data ?? []).map(normalizeTask) } as const;
+    },
+    ["tasks", user.id],
+    { tags: [`tasks:${user.id}`], revalidate: 30 },
+  );
+
+  return getCachedTasks();
 }
 
 export async function getTask(id: string): Promise<SingleTaskResult> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("tasks")
-    .select(
-      "id, title, project_id, owner_id, due_date, priority, status, description,estimate_minutes",
-    )
-    .eq("id", id)
-    .maybeSingle();
-
-  if (error) {
-    return { success: false, error: error.message };
-  }
-  if (!data) {
+  const result = await getTasks();
+  if (!result.success) return result;
+  const task = result.data.find((item) => String(item.id) === id);
+  if (!task) {
     return { success: false, error: "Task not found" };
   }
-  return { success: true, data: normalizeTask(data) };
+  return { success: true, data: task };
 }
 
 export async function updateTaskStatus(formData: FormData) {
@@ -149,6 +154,9 @@ export async function updateTaskStatus(formData: FormData) {
   }
 
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   const { error } = await supabase
     .from("tasks")
     .update({ status: databaseStatusByAppValue[status as TaskStatus] })
@@ -156,6 +164,7 @@ export async function updateTaskStatus(formData: FormData) {
   if (error) {
     redirect(`/tasks/${id}?error=${encodeURIComponent(error.message)}`);
   }
+  if (user) revalidateTag(`tasks:${user.id}`, { expire: 0 });
   revalidatePath("/tasks");
   revalidatePath(`/tasks/${id}`);
   redirect(`/tasks/${id}?updated=${Date.now()}`);
@@ -168,10 +177,14 @@ export async function deleteTask(formData: FormData) {
   }
 
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   const { error } = await supabase.from("tasks").delete().eq("id", id);
   if (error) {
     redirect(`/tasks/${id}?error=${encodeURIComponent(error.message)}`);
   }
+  if (user) revalidateTag(`tasks:${user.id}`, { expire: 0 });
   revalidatePath("/tasks");
   redirect("/tasks?deleted=1");
 }

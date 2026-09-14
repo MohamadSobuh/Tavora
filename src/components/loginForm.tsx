@@ -29,6 +29,7 @@ export default function LoginForm() {
         </label>
         <input
           id="email"
+          defaultValue="test@test.com"
           name="email"
           type="email"
           placeholder="you@example.com"
@@ -44,6 +45,7 @@ export default function LoginForm() {
         </div>
         <input
           id="password"
+          defaultValue="123456"
           name="password"
           type="password"
           placeholder="••••••••"
